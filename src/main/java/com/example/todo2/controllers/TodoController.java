@@ -1,63 +1,71 @@
 package com.example.todo2.controllers;
 
 import com.example.todo2.common.ErrorCodes;
-import com.example.todo2.entities.Todo;
+import com.example.todo2.exceptions.TodoNotFoundException;
 import com.example.todo2.requests.CreateTodo;
+import com.example.todo2.requests.UpdateTodo;
 import com.example.todo2.responses.ErrorResponse;
+import com.example.todo2.services.TodoService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
 @RequestMapping(path ="api/v1")
 public class TodoController {
 
-    private List<Todo> todos = new ArrayList<>(Arrays.asList(
-        new Todo(1, "Walk a dog"),
-        new Todo(2, "Walk a cat"),
-        new Todo(3, "Go home")
-    ));
+    private final TodoService todoService;
 
-    @PostMapping("/todos")
-    public ResponseEntity<Object> create(@RequestBody @Valid CreateTodo todo) {
-        try {
-            Todo newTodo = new Todo(this.todos.size() + 1, todo.getLabel());
-            this.todos.add(newTodo);
-            URI location = new URI("/api/v1/todos/" + newTodo.Id());
-            return ResponseEntity.created(location).body(newTodo);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .internalServerError()
-                    .body(new ErrorResponse(
-                            e.getMessage(),
-                            ErrorCodes.INTERNAL_SERVER_ERROR,
-                            HttpStatus.INTERNAL_SERVER_ERROR.value()
-                    ));
-        }
+    @Autowired
+    public TodoController(TodoService todoService) {
+        this.todoService = todoService;
     }
 
-    @GetMapping("/todos")
+    @PostMapping("/users/todos")
+    public ResponseEntity<Object> create(@RequestBody @Valid CreateTodo todo) throws URISyntaxException, Exception {
+        var newTodo = this.todoService.create(todo);
+        var location = new URI("/api/v1/users/todos/" + newTodo.getId());
+
+        return ResponseEntity.created(location).body(newTodo);
+    }
+
+    @PatchMapping("/todos")
+    public ResponseEntity<Object> update(@RequestBody @Valid UpdateTodo todo) throws TodoNotFoundException {
+        var updatedTodo = this.todoService.update(todo);
+
+        return ResponseEntity.ok(updatedTodo);
+    }
+
+    @GetMapping("/users/:userId/todos/:todoId")
+    public ResponseEntity<Object> todo(@PathVariable long userId, @PathVariable long todoId) throws TodoNotFoundException
+    {
+        var todo = this.todoService.get(todoId);
+
+        return ResponseEntity.ok(todo);
+    }
+
+
+    @DeleteMapping("/todos/:id")
+    public ResponseEntity<Object> delete(@PathVariable long id) throws TodoNotFoundException
+    {
+        this.todoService.delete(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("users/:id/todos")
     public ResponseEntity<Object> todos() {
-        try {
-            return ResponseEntity.ok().body(this.todos);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse(
-                            e.getMessage(),
-                            ErrorCodes.INTERNAL_SERVER_ERROR,
-                            HttpStatus.INTERNAL_SERVER_ERROR.value()
-                    ));
-        }
+        var todos = this.todoService.getAll();
+
+        return ResponseEntity.ok().body(todos);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -77,5 +85,27 @@ public class TodoController {
         }
 
         return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(Exception ex) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(
+                        "Something went wrong",
+                        ErrorCodes.INTERNAL_SERVER_ERROR,
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                ));
+    }
+
+    @ExceptionHandler(TodoNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(TodoNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        ex.getMessage(),
+                        ErrorCodes.TODO_NOT_FOUND,
+                        HttpStatus.CONFLICT.value()
+                ));
     }
 }

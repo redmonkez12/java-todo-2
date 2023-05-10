@@ -14,8 +14,8 @@ springdoc:
 spring:
   datasource:
     url: jdbc:mysql://aws.connect.psdb.cloud/todo?sslMode=VERIFY_IDENTITY
-    username: 0dlpiwtoo81hkqwz9i7k
-    password: pscale_pw_ckFEQM9uNdo3sGxwDyawGEUVLKEjECZUferc9ZDlQBa
+    username: 06hb6rcsqbb8oj44kvre
+    password: pscale_pw_3JyK8wASZEm0R0BhrmYjRkmRUf8iiKahP8C0vh2SAE0
   jpa:
     properties:
       hibernate:
