@@ -1,6 +1,7 @@
 package com.example.todo2.controllers;
 
 import com.example.todo2.common.ErrorCodes;
+import com.example.todo2.enums.SortEnum;
 import com.example.todo2.exceptions.TodoNotFoundException;
 import com.example.todo2.requests.CreateTodo;
 import com.example.todo2.requests.UpdateTodo;
@@ -17,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path ="api/v1")
@@ -61,9 +63,21 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("users/:id/todos")
-    public ResponseEntity<Object> todos() {
-        var todos = this.todoService.getAll();
+    @GetMapping("/todos")
+    public ResponseEntity<Object> todos(
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("search") Optional<String> search,
+            @RequestParam("sort") Optional<SortEnum> sort
+
+    ) {
+        var todos = this.todoService.getAll(
+                page.orElse(0),
+                size.orElse(10),
+                sort.orElse(SortEnum.ASC),
+                search.orElse("")
+
+        );
 
         return ResponseEntity.ok().body(todos);
     }

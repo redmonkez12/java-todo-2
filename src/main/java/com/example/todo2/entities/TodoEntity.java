@@ -1,5 +1,6 @@
 package com.example.todo2.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter
 @Getter
+@JsonIgnoreProperties("user")
 public class TodoEntity {
     @Id()
     @GeneratedValue(strategy = GenerationType.AUTO)

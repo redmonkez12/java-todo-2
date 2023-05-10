@@ -1,12 +1,15 @@
 package com.example.todo2.services;
 
 import com.example.todo2.entities.TodoEntity;
+import com.example.todo2.enums.SortEnum;
 import com.example.todo2.exceptions.TodoNotFoundException;
 import com.example.todo2.repositories.TodoRepository;
 import com.example.todo2.repositories.UserRepository;
 import com.example.todo2.requests.CreateTodo;
 import com.example.todo2.requests.UpdateTodo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,14 +27,21 @@ public class TodoService {
         this.userRepository = userRepository;
     }
 
-//    private List<TodoEntity> todos = new ArrayList<>(Arrays.asList(
-//            new TodoEntity(1, "Walk a dog"),
-//            new TodoEntity(2, "Walk a cat"),
-//            new TodoEntity(3, "Go home")
-//    ));
+    public List<TodoEntity> getAll(
+            Integer page,
+            Integer size,
+            SortEnum sort,
+            String search
+    ) {
+        var currentSort = sort.name.toUpperCase().equals(SortEnum.ASC.name) ? Sort.by("label").ascending() : Sort.by("label").descending();
+        var pagination = PageRequest.of(page, size, currentSort);
 
-    public List<TodoEntity> getAll() {
-        return this.todoRepository.findAll();
+        if (search.isEmpty()) {
+            return todoRepository.findAll(pagination).stream().toList();
+        }
+
+
+        return todoRepository.findByLabelContainingIgnoreCase(search, pagination);
     }
 
     public TodoEntity create(CreateTodo todo) throws Exception {
@@ -48,30 +58,14 @@ public class TodoService {
     }
 
     public TodoEntity get(long id) throws TodoNotFoundException {
-        var todo = this.todoRepository.findById(id)
+        return this.todoRepository.findById(id)
                 .orElseThrow(() -> new TodoNotFoundException("Todo not found [%s]".formatted(id)));
-
-
-        return todo;
-//        var found = this.todos.stream()
-//                .filter(currentTodo -> currentTodo.getId() == id)
-//                .findFirst()
-//                .orElseThrow(() -> new TodoNotFoundException("Todo not found [%s]".formatted(id)));
-//
-//        return found;
     }
 
     public TodoEntity delete(long id) throws TodoNotFoundException {
         var toDelete = this.get(id);
 
         this.todoRepository.delete(toDelete);
-
-//        var toDelete = this.todos.stream()
-//                .filter(currentTodo -> currentTodo.getId() == id)
-//                .findFirst()
-//                .orElseThrow(() -> new TodoNotFoundException("Todo not found [%s]".formatted(id)));
-//
-//        this.todos.remove(toDelete);
 //
         return toDelete;
     }
