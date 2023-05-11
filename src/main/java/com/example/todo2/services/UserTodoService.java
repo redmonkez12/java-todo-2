@@ -24,10 +24,12 @@ public class UserTodoService {
     public List<TodoEntity> getAll(long userId) throws Exception {
         var user = this.userService.find(userId);
 
-        return this.todoRepository.findByUser(user);
+        return this.todoRepository.findAllByUser(user);
     }
 
-//    public List<TodoEntity> get(long userId, long  todoId) {
-//
-//    }
+    public TodoEntity get(long userId, long  todoId) throws Exception {
+        var user = this.userService.find(userId);
+
+        return this.todoRepository.findByUser(user);
+    }
 }

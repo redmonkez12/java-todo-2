@@ -66,7 +66,7 @@ public class TodoService {
         var toDelete = this.get(id);
 
         this.todoRepository.delete(toDelete);
-//
+
         return toDelete;
     }
 
