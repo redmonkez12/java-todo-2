@@ -7,6 +7,8 @@ import com.example.todo2.repositories.RoleRepository;
 import com.example.todo2.repositories.UserRepository;
 import com.example.todo2.requests.CreateUser;
 import com.example.todo2.requests.LoginUser;
+import com.example.todo2.responses.UserResponse;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,4 +55,33 @@ public class UserService {
 
         return Objects.equals(userDb.getPassword(), user.getPassword());
     }
+
+    public UserResponse getUserResponse(UserEntity userEntity) {
+        return new UserResponse(
+                userEntity.getEmail(),
+                userEntity.getFirstName(),
+                userEntity.getLastName(),
+                userEntity.getId(),
+                userEntity.getRoles()
+        );
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public UserEntity saveUser(RegisterRequest registerRequest) throws Exception {
+        try {
+            UserEntity user = new UserEntity();
+
+            user.setUsername(registerRequest.getUsername());
+            user.setEmail(registerRequest.getEmail());
+            user.setActive(true);
+            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+
+            RoleEntity userRole = roleRepository.findByRole("USER_BASIC");
+            user.setRoles(new HashSet<RoleEntity>(Collections.singletonList(userRole)));
+            return userRepository.save(user);
+        } catch (Exception e) {
+            throw new Error(String.format("User was not created %s %s", registerRequest.getEmail(), e.getClass()));
+        }
+    }
+
 }
