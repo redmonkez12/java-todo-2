@@ -38,6 +38,10 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
+    public UserEntity findUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
     public UserEntity find(long id) throws Exception {
         return this.userRepository.findById(id)
                 .orElseThrow(() -> new Exception("User not found"));

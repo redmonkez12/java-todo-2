@@ -48,6 +48,12 @@ public class UserEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
 
+    @Column(name = "active", nullable = false)
+    private Boolean active;
+
+    @Column(name="email", unique = true, nullable = false)
+    private String email;
+
     public UserEntity(String firstName, String lastName, String username, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
