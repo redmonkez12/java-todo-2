@@ -53,13 +53,15 @@ public class SecurityConfiguration {
         http
                 .csrf()
                 .disable()
-                .authorizeRequests()
-                .requestMatchers("/api/v1/token", "/api/v1/auth", "/", "/api/v1/user", "/api-docs", "/api-docs/*", "/api-docs-ui.html", "/swagger-ui/*")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/todos").hasAnyAuthority("ADMIN")
-                .anyRequest()
-                .authenticated()
-                .and()
+                .formLogin()
+                .disable()
+                .httpBasic().disable()
+                .authorizeHttpRequests(
+                        authorize -> authorize.requestMatchers("/api/v1/token", "/api/v1/auth", "/", "/api/v1/user", "/api-docs", "/api-docs/*", "/api-docs-ui.html", "/swagger-ui/*")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/todos").hasAnyAuthority("ADMIN")
+                                .anyRequest()
+                                .authenticated())
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 

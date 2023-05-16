@@ -1,6 +1,7 @@
 package com.example.todo2.controllers;
 
 import com.example.todo2.common.ErrorCodes;
+import com.example.todo2.requests.RegisterRequest;
 import com.example.todo2.responses.ErrorResponse;
 import com.example.todo2.services.UserService;
 import jakarta.validation.Valid;

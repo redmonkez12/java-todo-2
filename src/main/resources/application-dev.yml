@@ -2,7 +2,7 @@ server:
   port: 8081
 
 jwt:
-  secret: zluteprasatkoslodolesa585858.
+  secret: zluteprasatkoslodolesa585858y8g8g9gfgf0gf0gf0g9fg8gf8gf0gf0gc8cf8f0
 
 springdoc:
   api-docs:

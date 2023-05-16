@@ -2,14 +2,17 @@ package com.example.todo2.services;
 
 import com.example.todo2.entities.RoleEntity;
 import com.example.todo2.entities.UserEntity;
+import com.example.todo2.enums.RoleEnum;
 import com.example.todo2.exceptions.UserNotFoundException;
 import com.example.todo2.repositories.RoleRepository;
 import com.example.todo2.repositories.UserRepository;
 import com.example.todo2.requests.CreateUser;
 import com.example.todo2.requests.LoginUser;
+import com.example.todo2.requests.RegisterRequest;
 import com.example.todo2.responses.UserResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -23,13 +26,17 @@ public class UserService {
 
     private final RoleRepository roleRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
     public UserService(
             UserRepository userRepository,
-            RoleRepository roleRepository
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserEntity create(CreateUser user) {
@@ -70,16 +77,19 @@ public class UserService {
     public UserEntity saveUser(RegisterRequest registerRequest) throws Exception {
         try {
             UserEntity user = new UserEntity();
+            user.setFirstName(registerRequest.getFirstName());
+            user.setLastName(registerRequest.getLastName());
 
             user.setUsername(registerRequest.getUsername());
             user.setEmail(registerRequest.getEmail());
             user.setActive(true);
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-            RoleEntity userRole = roleRepository.findByRole("USER_BASIC");
-            user.setRoles(new HashSet<RoleEntity>(Collections.singletonList(userRole)));
+            RoleEntity userRole = roleRepository.findByName(RoleEnum.ADMIN.name);
+            user.setRoles(new HashSet<>(Collections.singletonList(userRole)));
             return userRepository.save(user);
         } catch (Exception e) {
+            System.out.println(e);
             throw new Error(String.format("User was not created %s %s", registerRequest.getEmail(), e.getClass()));
         }
     }

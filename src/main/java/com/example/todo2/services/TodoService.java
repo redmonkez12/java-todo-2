@@ -1,6 +1,7 @@
 package com.example.todo2.services;
 
 import com.example.todo2.entities.TodoEntity;
+import com.example.todo2.entities.UserEntity;
 import com.example.todo2.enums.SortEnum;
 import com.example.todo2.exceptions.TodoNotFoundException;
 import com.example.todo2.repositories.TodoRepository;
@@ -10,6 +11,7 @@ import com.example.todo2.requests.UpdateTodo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,8 +46,8 @@ public class TodoService {
         return todoRepository.findByLabelContainingIgnoreCase(search, pagination);
     }
 
-    public TodoEntity create(CreateTodo todo) throws Exception {
-        var newUser = this.userRepository.findById(todo.getUserId()).orElse(null);
+    public TodoEntity create(CreateTodo todo, long userId) throws Exception {
+        var newUser = this.userRepository.findById(userId).orElse(null);
 
         if (newUser == null) {
             throw new Exception("fail");
@@ -60,6 +62,11 @@ public class TodoService {
     public TodoEntity get(long id) throws TodoNotFoundException {
         return this.todoRepository.findById(id)
                 .orElseThrow(() -> new TodoNotFoundException("Todo not found [%s]".formatted(id)));
+    }
+
+    public TodoEntity getAll(User user) throws TodoNotFoundException {
+        var userEntity = this.userRepository.findByEmail(user.getUsername());
+        return this.todoRepository.findByUser(userEntity);
     }
 
     public TodoEntity delete(long id) throws TodoNotFoundException {

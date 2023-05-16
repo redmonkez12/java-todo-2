@@ -1,16 +1,21 @@
 package com.example.todo2.controllers;
 
 import com.example.todo2.common.ErrorCodes;
+import com.example.todo2.entities.UserEntity;
 import com.example.todo2.enums.SortEnum;
 import com.example.todo2.exceptions.TodoNotFoundException;
 import com.example.todo2.requests.CreateTodo;
 import com.example.todo2.requests.UpdateTodo;
 import com.example.todo2.responses.ErrorResponse;
 import com.example.todo2.services.TodoService;
+import com.example.todo2.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,14 +31,20 @@ public class TodoController {
 
     private final TodoService todoService;
 
+    private final UserService userService;
+
     @Autowired
-    public TodoController(TodoService todoService) {
+    public TodoController(TodoService todoService, UserService userService) {
         this.todoService = todoService;
+        this.userService = userService;
     }
 
     @PostMapping("/users/todos")
-    public ResponseEntity<Object> create(@RequestBody @Valid CreateTodo todo) throws URISyntaxException, Exception {
-        var newTodo = this.todoService.create(todo);
+    public ResponseEntity<Object> create(@RequestBody @Valid CreateTodo todo, Authentication authentication) throws URISyntaxException, Exception {
+        var email = authentication.getName();
+        var user = this.userService.findUserByEmail(email);
+
+        var newTodo = this.todoService.create(todo, user.getId());
         var location = new URI("/api/v1/users/todos/" + newTodo.getId());
 
         return ResponseEntity.created(location).body(newTodo);
@@ -46,12 +57,13 @@ public class TodoController {
         return ResponseEntity.ok(updatedTodo);
     }
 
-    @GetMapping("/users/:userId/todos/:todoId")
-    public ResponseEntity<Object> todo(@PathVariable long userId, @PathVariable long todoId) throws TodoNotFoundException
+    @GetMapping("/users/todos")
+    public ResponseEntity<Object> todo(Authentication authentication) throws TodoNotFoundException
     {
-        var todo = this.todoService.get(todoId);
+        var user = authentication.getPrincipal();
+        var todos = this.todoService.getAll((User)user);
 
-        return ResponseEntity.ok(todo);
+        return ResponseEntity.ok(todos);
     }
 
 

@@ -1,15 +1,18 @@
 package com.example.todo2.auth.utils;
 
 import com.example.todo2.entities.UserEntity;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.*;
 import java.util.function.Function;
 
 
@@ -35,6 +38,11 @@ public class JwtUtils {
         return getClaimFromRefreshToken(token, Claims::getSubject);
     }
 
+    private SecretKey getSecretKey() {
+        byte[] decodedKey = Base64.getDecoder().decode(secretKey);
+        return new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA512");
+    }
+
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
@@ -52,11 +60,18 @@ public class JwtUtils {
 
 
     private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+//        SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+//        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+
+        return Jwts.parser().setSigningKey(getSecretKey()).parseClaimsJws(token).getBody();
+//        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jws);;
     }
 
     private Claims getAllClaimsFromRefreshToken(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+//        SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(token));
+
+        return Jwts.parser().setSigningKey(getSecretKey()).parseClaimsJws(token).getBody();
+//        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jws);
     }
 
 
@@ -78,15 +93,23 @@ public class JwtUtils {
 
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
-                .signWith(SignatureAlgorithm.HS512, secretKey).compact();
+                .signWith(getSecretKey())
+                .compact();
     }
 
     private String doGenerateRefreshToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_REFRESH_TOKEN_VALIDITY * 1000))
-                .signWith(SignatureAlgorithm.HS512, secretKey).compact();
+                .signWith(getSecretKey())
+                .compact();
     }
 
 
